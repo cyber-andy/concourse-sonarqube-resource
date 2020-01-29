@@ -58,12 +58,9 @@ if [[ -n "${sonar_organization}" ]]; then
 fi
 
 sonar_login=$(jq -r '.source.login // ""' < "${payload}")
+sonar_password=$(jq -r '.source.password // ""' < "${payload}")
 if [[ -n "${sonar_login}" ]]; then
 	scanner_opts+=" -Dsonar.login=\"${sonar_login}\""
-fi
-
-sonar_password=$(jq -r '.source.password // ""' < "${payload}")
-if [[ -n "${sonar_password}" ]]; then
 	scanner_opts+=" -Dsonar.password=\"${sonar_password}\""
 fi
 
