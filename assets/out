@@ -228,16 +228,19 @@ if [[ "${scanner_type}" == "cli" ]]; then
 	scanner_report_file="./.scannerwork/report-task.txt"
 elif [[ "${scanner_type}" == "maven" ]]; then
 	mvn="mvn"
-	if [[ "${DEBUG}" == "true" ]]; then
-		mvn+=" -X"
-	fi
 	if [[ -n "${maven_settings_file}" ]]; then
 		mvn+=" -s ${maven_settings_file}"
 	fi
 
-	scanner_bin="${mvn}"
+	# shellcheck disable=SC2016
+	maven_project_build_directory=$(${mvn} -q -f "${project_path}/pom.xml" -Dexec.executable="echo" -Dexec.args='${project.build.directory}' --non-recursive exec:exec)
+	scanner_report_file="${maven_project_build_directory}/sonar/report-task.txt"
+	unset maven_project_build_directory
+
 	if [[ "${DEBUG}" != "true" ]]; then
-		scanner_bin="${mvn} -q"
+		scanner_bin="mvn -q"
+	else
+		scanner_bin="mvn -X"
 	fi
 
 	sonar_maven_plugin_version=$(jq -r '.params.sonar_maven_plugin_version // ""' < "${payload}")
@@ -248,10 +251,6 @@ elif [[ "${scanner_type}" == "maven" ]]; then
 		scanner_bin="${scanner_bin} sonar:sonar"
 	fi
 
-	# shellcheck disable=SC2016
-	maven_project_build_directory=$(${mvn} -q -f "${project_path}/pom.xml" -Dexec.executable="echo" -Dexec.args='${project.build.directory}' --non-recursive exec:exec)
-	scanner_report_file="${maven_project_build_directory}/sonar/report-task.txt"
-	unset maven_project_build_directory
 fi
 
 # If any additional properties have been specified, we'll just append them to the
